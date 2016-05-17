@@ -42,7 +42,7 @@ static const struct file_operations key_fops = {
     .open       = file_open,
     .read       = seq_read,
     .llseek     = seq_lseek,
-    .release    = sq_release,
+    .release    = seq_release,
 };
 
 const char PATTERN[] = "noescribir";
